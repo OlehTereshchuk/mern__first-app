@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useHttp } from '../hooks/http.hook';
 import { useMessage } from '../hooks/message.hook';
+import { AuthContext } from '../context/AuthContext';
 
 const AuthPage = () => {
+  const auth = useContext(AuthContext);
   const message = useMessage();
   const { loading, error, request, clearError } = useHttp();
   const [form, setForm] = useState({
@@ -14,6 +16,10 @@ const AuthPage = () => {
     clearError();
   }, [error, message, clearError]);
 
+  useEffect(() => {
+    window.M.updateTextFields();
+  }, []);
+
   const changeHandler = ({ target }) => {
     setForm({ ...form, [target.name]: target.value });
   };
@@ -22,6 +28,13 @@ const AuthPage = () => {
     try {
       const data = await request('/api/auth/register', 'POST', {...form});
       message(data.message);
+    } catch(e) {}
+  };
+
+  const loginHandler = async() => {
+    try {
+      const data = await request('/api/auth/login', 'POST', {...form});
+      auth.login(data.token, data.userId);
     } catch(e) {}
   };
 
@@ -38,8 +51,8 @@ const AuthPage = () => {
                 placeholder="Enter email"
                 id="email"
                 type="email"
-                className="validate"
                 name="email"
+                value={form.email}
                 className="yellow-input"
                 onChange={changeHandler}
               />
@@ -51,9 +64,9 @@ const AuthPage = () => {
                 placeholder="Enter password"
                 id="password"
                 type="password"
-                className="validate"
                 name="password"
                 className="yellow-input"
+                value={form.password}
                 onChange={changeHandler}
               />
               <label htmlFor="password">Password</label>
@@ -65,6 +78,7 @@ const AuthPage = () => {
               className="btn yellow darken-4"
               type="button"
               style={{marginRight: 10}}
+              onClick={loginHandler}
               disabled={loading}
             >
               Sign in
